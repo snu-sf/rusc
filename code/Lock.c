@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "lock.h"
+#include "Lock.h"
 
 spinlock_t* Lock_new() {
   spinlock_t *l = malloc(sizeof(spinlock_t));

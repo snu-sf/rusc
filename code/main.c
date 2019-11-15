@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include "map.h"
-#include "user1.h"
-#include "user2.h"
+#include "Map.h"
+#include "F.h"
+#include "G.h"
 
 int main() {
   void* list = Map_new();

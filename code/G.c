@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include "map.h"
-#include "lock.h"
-#include "user1.h"
-#include "user2.h"
+#include "Map.h"
+#include "Lock.h"
+#include "F.h"
+#include "G.h"
 
 static void* G_memoized;
 static void* G_lock;
