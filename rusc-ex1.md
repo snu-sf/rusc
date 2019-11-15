@@ -33,7 +33,7 @@ Lock_Impl o Map_Impl o F_Impl o G_Impl <= Lock_SP1 o Map_SP1 o F_SP3 o G_SP3
 Module Lock {
   locked : int64 -> Option bool = (fun _ => None)
 
-  fun new() : uint64 {
+  fun new() : int64 {
     if (choose { true, false }) return 0
     id = choose { p | locked[p] = None /\ p != 0 }
     locked[id] := Some false
