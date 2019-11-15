@@ -1,1 +1,1 @@
-rm -f a.out && rm -f *.gch && gcc main.c map.h lock.h user1.h user2.h && ./a.out
+gcc -Wall -o main.out main.c lock.c map.c user1.c user2.c && ./main.out

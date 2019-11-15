@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "map.h"
 #include "user1.h"
 #include "user2.h"
