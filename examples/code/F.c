@@ -4,12 +4,19 @@
 #include "F.h"
 #include "G.h"
 
-static void* F_memoized;
 static void* F_lock;
+static void* F_memoized;
 
-void F_init() {
+bool F_init() {
   F_lock = Lock_new();
+  if (!F_lock) {
+    return false;
+  }
   F_memoized = Map_new();
+  if (!F_memoized) {
+    return false;
+  }
+  return true;
 }
 
 int F_sum(int x) {

@@ -4,7 +4,9 @@
 
 node_t** Map_new() {
   node_t** head = malloc(sizeof(node_t *));
-  *head = NULL;
+  if (head) {
+    *head = NULL;
+  }
   return head;
 }
 
