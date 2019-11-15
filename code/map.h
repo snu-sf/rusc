@@ -11,20 +11,13 @@ typedef struct node {
   struct node * next;
 } node_t;
 
-node_t **new() {
-  struct node ** head = malloc(sizeof(node_t **));
+void* Map_new() {
+  node_t ** head = malloc(sizeof(node_t *));
   *head = NULL;
   return head;
 }
-/* node_t *new() { */
-/*   node_t * head = malloc(sizeof(node_t)); */
-/*   head->key = -1; */
-/*   head->val = -1; */
-/*   head->next = NULL; */
-/*   return head; */
-/* } */
 
-void insert(node_t ** head, int key, int val) {
+void Map_insert(node_t ** head, int key, int val) {
     node_t * new_node;
     new_node = malloc(sizeof(node_t));
 
@@ -34,15 +27,7 @@ void insert(node_t ** head, int key, int val) {
     *head = new_node;
 }
 
-// -1 is None
-/* int find(node_t * head, int key) { */
-/*   while(head) { */
-/*     if(head->key == key) return head->val; */
-/*     head = head->next; */
-/*   } */
-/*   return -1; */
-/* } */
-int find(node_t ** head, int key) {
+int Map_find(node_t ** head, int key) {
   node_t* cur = *head;
   /* printf("%d\n", cur); */
   while(cur) {

@@ -14,34 +14,19 @@ struct spinlock {
 		.v = ATOMIC_FLAG_INIT \
 	}
 
-/* static inline void sl_init(struct spinlock *l) */
-/* { */
-/* 	*l = (struct spinlock)SPINLOCK_INIT; */
-/* } */
-
-/* static inline void sl_lock(struct spinlock *l) */
-/* { */
-/* 	while (atomic_flag_test_and_set_explicit(&l->v, memory_order_acquire)) { */
-/* 		/\* do nothing *\/ */
-/* 	} */
-/* } */
-
-/* static inline void sl_unlock(struct spinlock *l) */
-/* { */
-/* 	atomic_flag_clear_explicit(&l->v, memory_order_release); */
-/* } */
-
-void* sl_new() {
+void* Lock_new() {
   struct spinlock *l = malloc(sizeof(struct spinlock));
-  *l = (struct spinlock)SPINLOCK_INIT;
+  if (l) {
+    *l = (struct spinlock)SPINLOCK_INIT;
+  }
   return l;
 }
 
-void sl_lock(struct spinlock *l) {
+void Lock_lock(struct spinlock *l) {
   while (atomic_flag_test_and_set_explicit(&l->v, memory_order_acquire));
 }
 
-void sl_unlock(struct spinlock *l) {
+void Lock_unlock(struct spinlock *l) {
   atomic_flag_clear_explicit(&l->v, memory_order_release);
 }
 

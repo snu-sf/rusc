@@ -1,36 +1,36 @@
 #include "map.h"
 #include "lock.h"
 
-extern int f(int x);
+extern int F_sum(int x);
 
-static struct node** memoized_g;
-static struct spinlock* sl;
+void* G_memoized;
+void* G_lock;
 
-void init_g() {
-  memoized_g = new();
-  sl = sl_new();
+void G_init() {
+  G_lock = Lock_new();
+  G_memoized = Map_new();
 }
 
-int g(int x) {
+int G_sum(int x) {
   /* printf("[g] x = %d\n", x); */
   int t_i, t_v;
   if(x == 0) return 0;
-  sl_lock(sl);
-  t_i = find(memoized_g, 0);
+  Lock_lock(G_lock);
+  t_i = Map_find(G_memoized, 0);
   /* printf("[g] x, t_i: %d, %d\n", x, t_i); */
   if(x == t_i) {
-    t_v = find(memoized_g, 1);
+    t_v = Map_find(G_memoized, 1);
     /* printf("[g] t_i, t_v: %d, %d\n", t_i, t_v); */
-    sl_unlock(sl);
+    Lock_unlock(G_lock);
   }
   else {
-    sl_unlock(sl);
-    t_v = f(x-1) + x;
-    sl_lock(sl);
+    Lock_unlock(G_lock);
+    t_v = F_sum(x-1) + x;
+    Lock_lock(G_lock);
     /* printf("[g] x, t_v: %d, %d\n", x, t_v); */
-    insert(memoized_g, 0, x);
-    insert(memoized_g, 1, t_v);
-    sl_unlock(sl);
+    Map_insert(G_memoized, 0, x);
+    Map_insert(G_memoized, 1, t_v);
+    Lock_unlock(G_lock);
   }
   return t_v;
 }

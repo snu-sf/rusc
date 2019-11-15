@@ -1,28 +1,28 @@
 #include "map.h"
 #include "lock.h"
 
-extern int g(int x);
+extern int G_sum(int x);
 
-static struct node** memoized_f;
-static struct spinlock* sl;
+void* F_memoized;
+void* F_lock;
 
-void init_f() {
-  memoized_f = new();
-  sl = sl_new();
+void F_init() {
+  F_lock = Lock_new();
+  F_memoized = Map_new();
 }
 
-int f(int x) {
+int F_sum(int x) {
   /* printf("[f] x = %d\n", x); */
   int t;
   if(x == 0) return 0;
-  sl_lock(sl);
-  t = find(memoized_f, x);
-  sl_unlock(sl);
+  Lock_lock(F_lock);
+  t = Map_find(F_memoized, x);
+  Lock_unlock(F_lock);
   if(t == -1) {
-    t = g(x-1) + x;
-    sl_lock(sl);
-    insert(memoized_f, x, t);
-    sl_unlock(sl);
+    t = G_sum(x-1) + x;
+    Lock_lock(F_lock);
+    Map_insert(F_memoized, x, t);
+    Lock_unlock(F_lock);
   }
   return t;
 }
