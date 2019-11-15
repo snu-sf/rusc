@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include "map.h"
 
-void* Map_new() {
-  node_t ** head = malloc(sizeof(node_t *));
+node_t** Map_new() {
+  node_t** head = malloc(sizeof(node_t *));
   *head = NULL;
   return head;
 }
 
-void Map_insert(node_t ** head, int key, int val) {
-    node_t * new_node;
+void Map_insert(node_t** head, int key, int val) {
+    node_t* new_node;
     new_node = malloc(sizeof(node_t));
 
     new_node->key = key;
@@ -18,7 +18,7 @@ void Map_insert(node_t ** head, int key, int val) {
     *head = new_node;
 }
 
-int Map_find(node_t ** head, int key) {
+int Map_find(node_t** head, int key) {
   node_t* cur = *head;
   /* printf("%d\n", cur); */
   while(cur) {

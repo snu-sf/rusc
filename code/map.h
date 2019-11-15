@@ -7,8 +7,8 @@ typedef struct node {
   struct node * next;
 } node_t;
 
-extern void* Map_new();
-extern void Map_insert(node_t ** head, int key, int val);
-extern int Map_find(node_t ** head, int key);
+extern node_t** Map_new();
+extern void Map_insert(node_t** head, int key, int val);
+extern int Map_find(node_t** head, int key);
 
 #endif
