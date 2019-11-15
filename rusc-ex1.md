@@ -1,16 +1,25 @@
 (Lock_Impl) ...
+
 (Map_Impl) ...
+
 (F_Impl) ...
+
 (G_Impl) ...
 
 -----------------------
 
 Lock_Impl <= Lock_SP1
+
 Map_Impl <= Map_SP1
+
 F_Impl <= F_SP1
+
 G_Impl <= G_SP1
+
 Lock_SP1 o Map_SP1 o F_SP1 <= Lock_SP1 o Map_SP1 o F_SP2
+
 Lock_SP1 o Map_SP1 o G_SP1 <= Lock_SP1 o Map_SP1 o G_SP2
+
 F_SP2 o G_SP2 <= F_SP3 o G_SP3
 
 => by RUSC theory
@@ -20,6 +29,7 @@ Lock_Impl o Map_Impl o F_Impl o G_Impl <= Lock_SP1 o Map_SP1 o F_SP3 o G_SP3
 -----------------------
 
 (Lock_SP1)
+```Coq
 Module Lock {
   locked : int64 -> Option bool = (fun _ => None)
 
@@ -52,8 +62,10 @@ Module Lock {
     locked[id] := false
   }
 }
+```
 
 (Map_SP1)
+```Coq
 Module Map {
   map: int64 -> option (bool * (int64 -> option int64)) = (fun _ => None)
 
@@ -87,8 +99,10 @@ Module Map {
     end
   }
 }
+```
 
 (F_SP1)
+```Coq
 Module F {
   initialized : bool = false
   lock: int64 = 0
@@ -127,8 +141,10 @@ Module F {
     end
   }
 }
+```
 
 (G_SP1)
+```Coq
 Module G {
   initialized : bool = false
   lock: int64 = 0
@@ -175,9 +191,10 @@ Module G {
     return sum
   }
 }
-
+```
 
 (F_SP2)
+```Coq
 Module F {
   initialized : bool = false
 
@@ -203,8 +220,10 @@ Module F {
     return (summation(i))
   }
 }
+```
 
 (G_SP2)
+```Coq
 Module G {
   initialized : bool = false
 
@@ -230,8 +249,10 @@ Module G {
     return (summation(i))
   }
 }
+```
 
 (F_SP3)
+```Coq
 Module F {
   initialized : bool = false
 
@@ -274,3 +295,4 @@ Module G {
     return (summation(i))
   }
 }
+```
