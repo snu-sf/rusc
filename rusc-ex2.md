@@ -1,10 +1,10 @@
-(Lock_Impl) ...
+(Lock_Impl) See `code/Lock.[hc]`
 
-(Map_Impl) ...
+(Map_Impl) See `code/Map.[hc]`
 
-(F_Impl) ...
+(F_Impl) See `code/F.[hc]`
 
-(G_Impl) ...
+(G_Impl) See `code/G.[hc]`
 
 -----------------------
 
