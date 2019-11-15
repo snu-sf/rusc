@@ -3,7 +3,7 @@
 
 extern int g(int x);
 
-static struct node* memoized_f;
+static struct node** memoized_f;
 static struct spinlock* sl;
 
 void init_f() {
@@ -21,7 +21,7 @@ int f(int x) {
   if(t == -1) {
     t = g(x-1) + x;
     sl_lock(sl);
-    insert(&memoized_f, x, t);
+    insert(memoized_f, x, t);
     sl_unlock(sl);
   }
   return t;

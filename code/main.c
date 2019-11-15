@@ -3,15 +3,15 @@
 #include "user2.h"
 
 int main() {
-  node_t* list = new();
+  node_t** list = new();
   printf("%d\t%d\t%d\n", find(list, 1), find(list, 2), find(list, 3));
-  insert(&list, 2, 20);
+  insert(list, 2, 20);
   printf("%d\t%d\t%d\n", find(list, 1), find(list, 2), find(list, 3));
-  insert(&list, 3, 30);
+  insert(list, 3, 30);
   printf("%d\t%d\t%d\n", find(list, 1), find(list, 2), find(list, 3));
-  insert(&list, 1, 10);
+  insert(list, 1, 10);
   printf("%d\t%d\t%d\n", find(list, 1), find(list, 2), find(list, 3));
-  insert(&list, 3, 300);
+  insert(list, 3, 300);
   printf("%d\t%d\t%d\n", find(list, 1), find(list, 2), find(list, 3));
 
   init_f();
