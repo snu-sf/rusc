@@ -21,16 +21,6 @@ is_hv is either true or false. It is changed directly in interaction semantics (
 //그러면 그 데이터를 올바르게 넘겼는지 알 수 없음 (vm1이 vm2인 척 하고 share_memory call)
 //정리하면, current_vm (레지스터에 있던 인자로 넘기던) 데이터를 vm이 만질 수 있으면 안됨.
 
-/*
-Mem[0] represents owner of page [000, 100).
-Mem[1] represents owner of page [100, 200).
-Mem[2] represents owner of page [200, 300).
-
-Mem[0] = 0x001 (HV owns it)
-Mem[1] = 0x010 (VM1 owns it)
-Mem[2] = 0x100 (VM2 owns it)
-*/
-
 After initialization
 Accesslevel = OWN | ACCESSIBLE
 [000, 100) -> HV stack, mailbox, etc...
@@ -145,12 +135,25 @@ Module HVC {
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
         Some(from', to', current_vm, OWN) => {
-          if((from, to) ⊆ (from', to')) return true;
+          if((from, to) ⊆ (from', to')) return true
         }
         _ => _
       }
     }
-    return false;
+    return false
+  }
+  
+  priv fun current_vm_is_exclusive_owner(from: int64, to: int64) : bool {
+    if(!current_vm_is_owner()) return false;
+    for(int i=0; i<10; i++) {
+      match read_entry!(100 + 10*i) with {
+        Some(from', to', vm_id, _) => {
+          if((from, to) ∩ (from', to') /\ vm_id != current_vm) return false
+        }
+        _ => _
+      }
+    }
+    return true
   }
   
   fun share_memory(from: int64, to: int64, vm_id: int8) : int64 {
@@ -162,8 +165,17 @@ Module HVC {
   }
   
   fun give_memory(from: int64, to: int64, vm_id: int8) : int64 {
-    if(!current_vm_is_owner(from, to)) return -1
-    // TODO: fill in
+    if(!current_vm_is_exclusive_owner(from, to)) return -1
+    for(int i=0; i<10; i++) {
+      match read_entry!(100 + 10*i) with {
+        Some(from, to, current_vm, OWN) => {
+          if(write_entry!(100 + 10*i, (from, to, vm_id, OWN))) return true
+          else return false
+        }
+        _ => _
+      }
+    }
+    return false
   }
 
   fun revoke_memory(from: int64, to: int64, vm_id: int8) : int64 {

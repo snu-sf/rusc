@@ -50,7 +50,7 @@ Module Top' {
 
   fun run1() : (ml: Mem * local_state) -> (ml': Mem * local_state) -> Prop :=
     VM1_Impl.run ml ml' /\ (NOSTORE: guarantee!(for i in [0,200), ml.fst[i] == ml'.fst[i]))
-  (* NOREAD? -> prove non-interference lemma? memory permission that induces NB? *)
+  (* NOREAD? -> prove non-interference lemma? make memory model's permission that induces NB? *)
 
   fun run2() : (ml: Mem * local_state) -> (ml': Mem * local_state) -> Prop :=
     ... ditto ...
