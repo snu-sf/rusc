@@ -131,6 +131,8 @@ Module Mpool {
 //   어떤 경우에도 permission table이 corrupt 된게 노출되지는 않음 (write_entry!가 완전히 적히지 않은 상태)
 ```Coq
 Module HVC {
+  l := Lock.new()
+
   priv fun current_vm_is_owner(from: int64, to: int64) : bool {
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
@@ -157,6 +159,7 @@ Module HVC {
   }
   
   fun share_memory(from: int64, to: int64, vm_id: int8) : int64 {
+    /* lock is omitted, but it is fully locked */
     if(!current_vm_is_owner(from, to)) return -1
     let new_page = Mpool.alloc_page()
     if(new_page == NULL) return -1
@@ -165,6 +168,7 @@ Module HVC {
   }
   
   fun give_memory(from: int64, to: int64, vm_id: int8) : int64 {
+    /* lock is omitted, but it is fully locked */
     if(!current_vm_is_exclusive_owner(from, to)) return -1
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
@@ -179,6 +183,7 @@ Module HVC {
   }
 
   fun revoke_memory(from: int64, to: int64, vm_id: int8) : int64 {
+    /* lock is omitted, but it is fully locked */
     if(!current_vm_is_owner(from, to)) return -1
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
