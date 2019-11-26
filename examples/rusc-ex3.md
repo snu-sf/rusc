@@ -20,17 +20,23 @@ Top_Spec: erase UB
 
 Top_Spec': introduce NOB
 
+.
 
+.
 
 Global Data: Mem, current_vm, is_hv
 
 current_vm is either 1 or 2. It is changed directly in interaction semantics (interleaving run1, run2)
+
 is_hv is either true or false. It is changed directly in interaction semantics (hvcall, return)
 
 //hypervisor id = 0, hvcall 때 current_vm = 0으로 세팅하면 --> hvcall 한 vm 이 자기 id 도 넘겨야 함.
+
 //그러면 그 데이터를 올바르게 넘겼는지 알 수 없음 (vm1이 vm2인 척 하고 share_memory call)
+
 //정리하면, current_vm (레지스터에 있던 인자로 넘기던) 데이터를 vm이 만질 수 있으면 안됨.
 
+```
 After initialization
 Accesslevel = OWN | ACCESSIBLE
 [000, 100) -> HV stack, mailbox, etc...
@@ -41,8 +47,10 @@ Accesslevel = OWN | ACCESSIBLE
   [120, 130) -> (    true,  300,  400,           2,         OWN)
 [200, 300) -> VM1
 [300, 400) -> VM2
+```
 
 Macroes
+```
 assume!(cond)    := if(!cond) UndefinedBehavior
 guarantee!(cond) := if(!cond) NoBehavior
 /* below operations use HW.hw_load, HW.hw_store so that permissions are checked */
@@ -55,6 +63,7 @@ write_entry!(page: i64, (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel
 invalidate_entry!(page: i64) := ...
 read_entry_hardware!(page: i64) := same as read_entry!, but access Mem directly instead of using HW.hw_load.
   /* NOTE: if we use read_entry!, it causes infinite loop */
+```
 
 (HW)
 //Basically, [** YIELD **]s are everywhere
