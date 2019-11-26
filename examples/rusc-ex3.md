@@ -1,13 +1,23 @@
 HW o Lock_Impl <= HW o Lock_Spec
+
 HW o Lock_Spec o Mpool_Impl <= HW o Lock_Spec o Mpool_Spec
+
 HW o Mpool_Spec o HVC_Impl <= HW o Mpool_Spec o HVC_Spec
+
 ...
+
 HW o Mpool_Spec o HVC_Spec o ... <= HW o HV_Spec
+
 HW o HV_Spec o VM1_Impl o VM2_Impl <= HW o Top_Spec
+
 HW o Top_Spec <= HW o Top_Spec'
+
 (HW module exists everywhere. HW module's functions are like inline functions)
 
+
+
 Top_Spec: erase UB
+
 Top_Spec': introduce NOB
 
 

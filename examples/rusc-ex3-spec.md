@@ -1,8 +1,13 @@
 (HVC_Spec)
+
 //Note: all methods are atomic now (no [** YIELD **]) && local lock is disappeared
+
 //TODO: Mpool.alloc_page(), free_page()도 지워도 됨. 다음 단계(합칠 때)?
+
 //Note: write_entry! UB가 사라졌는데 이게 설명되는 이유: corresponds에서 자기 permission 써놓음
+
 //TODO: latest_seen_memory 저장할 필요 없나?
+
 ```Coq
 Module HVC {
   //logical view of permission table
