@@ -36,11 +36,12 @@ Accesslevel = OWN | ACCESSIBLE
 Macroes
 assume!(cond)    := if(!cond) UndefinedBehavior
 guarantee!(cond) := if(!cond) NoBehavior
-/* below operations use HW.hw_load, HW.hw_store so that permission is checked */
+/* below operations use HW.hw_load, HW.hw_store so that permissions are checked */
+/* if HW.hw_load or HW.hw_store fails, it gives UB */
 /* NOTE: its implementation is not locked at all -- [** YIELD **] is everywhere */
 read_entry!(page: i64): Option (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel) :=  ...
   /* NOTE: first checks validity bit */
-write_entry!(page: i64, (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel)): bool := ...
+write_entry!(page: i64, (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel)) := ...
   /* NOTE: it writes is_valid bit at last */
 invalidate_entry!(page: i64) := ...
 read_entry_hardware!(page: i64) := same as read_entry!, but access Mem directly instead of using HW.hw_load.
@@ -85,8 +86,8 @@ Module HW {
       [** YIELD **]
       match read_entry_hardware!(100 + 10*i) {
         [** YIELD **]
-        Some(from, to, hv_or_vm_id, _) => {
-          if(hv_or_vm_id == current_hv_or_vm && addr ∈ [from, to)) return true;
+        Some(from, to, current_hv_or_vm, _) => {
+          if(addr ∈ [from, to)) return true;
         }
         None => _
       }
@@ -183,7 +184,7 @@ Module HVC {
     if(!current_vm_is_owner(from, to)) return -1
     let new_page = Mpool.alloc_page()
     if(new_page == NULL) return -1
-    if(!write_entry!(new_page, (from, to, vm_id, ACC))) return -1
+    write_entry!(new_page, (from, to, vm_id, ACC))
     return 0
   }
   
@@ -192,8 +193,8 @@ Module HVC {
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
         Some(from, to, current_vm, OWN) => {
-          if(write_entry!(100 + 10*i, (from, to, vm_id, OWN))) return true
-          else return false
+          write_entry!(100 + 10*i, (from, to, vm_id, OWN))
+          return true
         }
         _ => _
       }
