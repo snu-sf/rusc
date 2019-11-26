@@ -1,14 +1,15 @@
-Lock_Impl <= Lock_Spec
-Lock_Spec o Mpool_Impl <= Lock_Spec o Mpool_Spec
+HW o Lock_Impl <= HW o Lock_Spec
+HW o Lock_Spec o Mpool_Impl <= HW o Lock_Spec o Mpool_Spec
 HW o Mpool_Spec o HVC_Impl <= HW o Mpool_Spec o HVC_Spec
-
-HW + HV_Impl <= HW + HV_Spec
-HW + HV_Spec + VM1_Impl + VM_Impl2 <= HW + Top_Spec
-HW + Top_Spec <= HW + Top'_Spec
+...
+HW o Mpool_Spec o HVC_Spec o ... <= HW o HV_Spec
+HW o HV_Spec o VM1_Impl o VM2_Impl <= HW o Top_Spec
+HW o Top_Spec <= HW o Top_Spec'
+HW o Top_Spec' <= HW o Top_Spec''
 (HW module exists everywhere. HW module's functions are like inline functions)
 
-Top_Spec: erase UB
-Top'_Spec: introduce NOB
+Top_Spec': erase UB
+Top_Spec'': introduce NOB
 
 
 
@@ -42,9 +43,11 @@ read_entry!(page: i64): Option (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: Acc
 write_entry!(page: i64, (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel)): bool := ...
   /* NOTE: it writes is_valid bit at last */
 invalidate_entry!(page: i64) := ...
+read_entry_hardware!(page: i64) := same as read_entry!, but access Mem directly instead of using HW.hw_load.
+  /* NOTE: if we use read_entry!, it causes infinite loop */
 
 (HW)
-//Basically, [** YIELD **] everywhere
+//Basically, [** YIELD **]s are everywhere
 
 ```Coq
 Module HW {
@@ -80,10 +83,10 @@ Module HW {
     [** YIELD **]
     for(int i=0; i<10; i++) {
       [** YIELD **]
-      match read_entry!(100 + 10*i) {
+      match read_entry_hardware!(100 + 10*i) {
         [** YIELD **]
         Some(from, to, hv_or_vm_id, _) => {
-          if(hv_or_vm_id == current_hv_or_vm && from <= addr < to) return true;
+          if(hv_or_vm_id == current_hv_or_vm && addr ∈ [from, to)) return true;
         }
         None => _
       }
@@ -94,9 +97,10 @@ Module HW {
 ```
 
 
-(Mpool_SP)
+(Mpool_Spec)
 //Singleton object
 //Its implementation uses lock, so it has no [** YIELD **]
+//Note: in Hafnium, it is not fully locked. It does not lock when there is only one core: e.g., initialization
 ```Coq
 Module Mpool {
   pages: Set int64
@@ -115,7 +119,7 @@ Module Mpool {
 ```
 
 
-(Mpool_SP_rust)
+(Mpool_Spec_rust)
 //Diff: It maintains invariant
 ```Coq
 Module Mpool {
@@ -143,6 +147,9 @@ Module Mpool {
 //   어떤 경우에도 permission table이 corrupt 된게 노출되지는 않음 (zeroing을 이상하게 하면 일어날 수도 있는데, 안함)
 // - share 했을 때 메모리 접근이 check_permission (read_entry!) 통과했으면 write_entry! 에서 적었던 내용이 전부 전달됨.
 //   어떤 경우에도 permission table이 corrupt 된게 노출되지는 않음 (write_entry!가 완전히 적히지 않은 상태)
+
+// [** YIELD **]s are omitted, but it exists in every line.
+// lock()/unlock()s are omitted, but all the methods are fully locked.
 ```Coq
 Module HVC {
   l := Lock.new()
@@ -151,7 +158,7 @@ Module HVC {
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
         Some(from', to', current_vm, OWN) => {
-          if((from, to) ⊆ (from', to')) return true
+          if([from, to) ⊆ [from', to')) return true
         }
         _ => _
       }
@@ -160,11 +167,11 @@ Module HVC {
   }
   
   priv fun current_vm_is_exclusive_owner(from: int64, to: int64) : bool {
-    if(!current_vm_is_owner()) return false;
+    if(!current_vm_is_owner(from, to)) return false;
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
         Some(from', to', vm_id, _) => {
-          if((from, to) ∩ (from', to') /\ vm_id != current_vm) return false
+          if([from, to) ∩ [from', to') /\ vm_id != current_vm) return false
         }
         _ => _
       }
@@ -173,7 +180,6 @@ Module HVC {
   }
   
   fun share_memory(from: int64, to: int64, vm_id: int8) : int64 {
-    /* lock is omitted, but it is fully locked */
     if(!current_vm_is_owner(from, to)) return -1
     let new_page = Mpool.alloc_page()
     if(new_page == NULL) return -1
@@ -182,7 +188,6 @@ Module HVC {
   }
   
   fun give_memory(from: int64, to: int64, vm_id: int8) : int64 {
-    /* lock is omitted, but it is fully locked */
     if(!current_vm_is_exclusive_owner(from, to)) return -1
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
@@ -197,7 +202,6 @@ Module HVC {
   }
 
   fun revoke_memory(from: int64, to: int64, vm_id: int8) : int64 {
-    /* lock is omitted, but it is fully locked */
     if(!current_vm_is_owner(from, to)) return -1
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
