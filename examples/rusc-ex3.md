@@ -5,11 +5,10 @@ HW o Mpool_Spec o HVC_Impl <= HW o Mpool_Spec o HVC_Spec
 HW o Mpool_Spec o HVC_Spec o ... <= HW o HV_Spec
 HW o HV_Spec o VM1_Impl o VM2_Impl <= HW o Top_Spec
 HW o Top_Spec <= HW o Top_Spec'
-HW o Top_Spec' <= HW o Top_Spec''
 (HW module exists everywhere. HW module's functions are like inline functions)
 
-Top_Spec': erase UB
-Top_Spec'': introduce NOB
+Top_Spec: erase UB
+Top_Spec': introduce NOB
 
 
 
@@ -184,7 +183,7 @@ Module HVC {
     if(!current_vm_is_owner(from, to)) return -1
     let new_page = Mpool.alloc_page()
     if(new_page == NULL) return -1
-    write_entry!(new_page, (from, to, vm_id, ACC))
+    write_entry!(new_page, (from, to, vm_id, ACCESSIBLE))
     return 0
   }
   
@@ -194,12 +193,12 @@ Module HVC {
       match read_entry!(100 + 10*i) with {
         Some(from, to, current_vm, OWN) => {
           write_entry!(100 + 10*i, (from, to, vm_id, OWN))
-          return true
+          return 0
         }
         _ => _
       }
     }
-    return false
+    return -1
   }
 
   fun revoke_memory(from: int64, to: int64, vm_id: int8) : int64 {
