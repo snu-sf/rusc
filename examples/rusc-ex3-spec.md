@@ -5,9 +5,9 @@ Module HV {
   latest_memory: Mem
   
   fun share_memory(owners) {
-    assert(current_vm == 1 || current_vm == 2); (TODO: just use enum type)
-    assert(for i in [0,100), latest_memory[i] == Mem[i]);
-    assert(Mem[0] == 0x001); //actually implied from above
+    assume!(current_vm == 1 || current_vm == 2); (TODO: just use enum type)
+    assume!(for i in [0,100), latest_memory[i] == Mem[i]);
+    assume!(Mem[0] == 0x001); //actually implied from above
     Mem[current_vm] := owners;
     latest_memory := Mem;
   }
@@ -49,7 +49,7 @@ Module Top' {
   ...
 
   fun run1() : (ml: Mem * local_state) -> (ml': Mem * local_state) -> Prop :=
-    VM1_Impl.run ml ml' /\ (NOSTORE: grnt(for i in [0,100), ml.fst[i] == ml'.fst[i]))
+    VM1_Impl.run ml ml' /\ (NOSTORE: guarantee!(for i in [0,200), ml.fst[i] == ml'.fst[i]))
   (* NOREAD? -> prove non-interference lemma? *)
 
   fun run2() : (ml: Mem * local_state) -> (ml': Mem * local_state) -> Prop :=
