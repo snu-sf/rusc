@@ -8,6 +8,8 @@
 
 //TODO: latest_seen_memory 저장할 필요 없나?
 
+//NOTE: corresponds가 그냥 막 정한 relation은 아니고, 잘 정한 것. physical view로 보는 다른 모듈들이 (여기선 HW) 존중하는 relation. (p1 ~ l, p2 ~ l 이면 p1이든 p2든 상관 안함)
+
 ```Coq
 Module HVC {
   //logical view of permission table
@@ -15,7 +17,7 @@ Module HVC {
   permission_table: int64 -> Set (hv_or_vm_id: int64, acc_lv: AccessLevel)
 
   //correspondence between logical view and physical state
-  corresponds: Mem -> permission_table -> Prop := ...
+  corresponds: Mem[100, 200) -> permission_table -> Prop := ...
 
   priv fun current_vm_is_owner(from: int64, to: int64) : bool {
     forall i in [from, to), 
@@ -35,7 +37,7 @@ Module HVC {
     if(new_page == NULL) return -1
     forall i in [from, t), 
       (permission_table i).put(vm_id, ACCESSIBLE)
-    Mem <-| Mem' s.t. corresponds(Mem', permission_table) 
+      Mem[100, 200) <-| new_physical s.t. corresponds(new_physical, permission_table) 
     //Note: choosing Mem' is non-deterministic. 
     //logically: [0,100) -> BLAH 
     //physically: [0,100) -> BLAH || ([0, 40) -> BLAH, [40, 100) -> BLAH) || ... || ...
@@ -48,7 +50,7 @@ Module HVC {
     if(choose { true, false }) {
       forall i in [from, to),
         (permission_table i).clear().put(vm_id, OWN)
-      Mem <-| Mem' s.t. corresponds(Mem', permission_table) 
+      Mem[100, 200) <-| new_physical s.t. corresponds(new_physical, permission_table) 
       return 0
     }
     else return -1
@@ -61,7 +63,7 @@ Module HVC {
       //TODO: 지금 구현이랑 안맞음. 이게 되려면 구현에서 (from, to) 한개 뿐임을 확인해야 함
       forall i in [from, to),
         (permission_table i).filter(|elem| elem.fst <> vm_id)
-      Mem <-| Mem' s.t. corresponds(Mem', permission_table) 
+      Mem[100, 200) <-| new_physical s.t. corresponds(new_physical, permission_table) 
       return 0
     }
     else return -1
