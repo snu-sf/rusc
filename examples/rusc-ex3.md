@@ -36,6 +36,7 @@ Macroes
 assume!(cond)    := if(!cond) UndefinedBehavior
 guarantee!(cond) := if(!cond) NoBehavior
 /* below operations use HW.hw_load, HW.hw_store so that permission is checked */
+/* NOTE: its implementation is not locked at all -- [** YIELD **] is everywhere */
 read_entry!(page: i64): Option (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel) :=  ...
   /* NOTE: first checks validity bit */
 write_entry!(page: i64, (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel)): bool := ...
@@ -43,22 +44,32 @@ write_entry!(page: i64, (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel
 invalidate_entry!(page: i64) := ...
 
 (HW)
+//Basically, [** YIELD **] everywhere
+
 ```Coq
 Module HW {
   fun hw_load(addr) : option memval {
-    if(check_permission(addr))
+    if(check_permission(addr)) {
+      [** YIELD **]
       return Some(Mem[addr])
-    else 
+    }
+    else {
+      [** YIELD **]
       return None
+    }
   }
 
   fun hw_store(addr, memval) : bool {
     if(check_permission(addr)) {
+      [** YIELD **]
       Mem[addr] = val;
+      [** YIELD **]
       return true
     }
-    else 
+    else {
+      [** YIELD **]
       return false
+    }
   }
 
   priv fun check_permission(addr) {
@@ -66,8 +77,11 @@ Module HW {
       current_hv_or_vm = 0
     else
       current_hv_or_vm = current_vm
+    [** YIELD **]
     for(int i=0; i<10; i++) {
+      [** YIELD **]
       match read_entry!(100 + 10*i) {
+        [** YIELD **]
         Some(from, to, hv_or_vm_id, _) => {
           if(hv_or_vm_id == current_hv_or_vm && from <= addr < to) return true;
         }
@@ -82,7 +96,7 @@ Module HW {
 
 (Mpool_SP)
 //Singleton object
-//Its implementation uses lock
+//Its implementation uses lock, so it has no [** YIELD **]
 ```Coq
 Module Mpool {
   pages: Set int64
