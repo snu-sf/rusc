@@ -34,23 +34,23 @@ Mem[2] = 0x100 (VM2 owns it)
 After initialization
 Accesslevel = OWN | ACCESSIBLE
 [000, 100) -> HV stack, mailbox, etc...
-[100, 200) -> permission (page) table. mpool manages it
-  [   ,    ) -> (from, to, hv_or_vm_id, AccessLevel)
-  [100, 110) -> (0,   200,           0, OWN)
-  [110, 120) -> (200, 300,           1, OWN)
-  [120, 130) -> (300, 400,           2, OWN)
+[100, 200) -> permission table (page table in Hafnium). mpool manages it
+  [   ,    ) -> (is_valid, from,   to, hv_or_vm_id, AccessLevel)
+  [100, 110) -> (    true,    0,  200,           0,         OWN)
+  [110, 120) -> (    true,  200,  300,           1,         OWN)
+  [120, 130) -> (    true,  300,  400,           2,         OWN)
 [200, 300) -> VM1
 [300, 400) -> VM2
 
 Macroes
 assume!(cond)    := if(!cond) UndefinedBehavior
 guarantee!(cond) := if(!cond) NoBehavior
-read_entry!(from: i64, to: i64): Option (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel) := 
-  /* it uses HW.hw_load, which checks permission */
-write_entry!(from: i64, to: i64, (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel)): bool :=
-  /* it uses HW.hw_store, which checks permission */
-invalidate_entry!(from: i64, to: i64) :=
-  /* it uses HW.hw_store, which checks permission */
+/* below operations use HW.hw_load, HW.hw_store so that permission is checked */
+read_entry!(page: i64): Option (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel) :=  ...
+  /* NOTE: first checks validity bit */
+write_entry!(page: i64, (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel)): bool := ...
+  /* NOTE: it writes is_valid bit at last */
+invalidate_entry!(page: i64) := ...
 
 (HW)
 ```Coq
@@ -77,7 +77,7 @@ Module HW {
     else
       current_hv_or_vm = current_vm
     for(int i=0; i<10; i++) {
-      match read_entry!(100 + 10*i, 100 + 10*i + 10) {
+      match read_entry!(100 + 10*i) {
         Some(from, to, hv_or_vm_id, _) => {
           if(hv_or_vm_id == current_hv_or_vm && from <= addr < to) return true;
         }
@@ -105,7 +105,6 @@ Module Mpool {
   }
 
   fun free_page(page: int64) {
-    invalidate_entry!(page, page+10)
     pages.put(page)
   }
 }
@@ -134,45 +133,45 @@ Module Mpool {
 
 
 (HVC_Impl)
+//Q: Is HVC/memory access(HW) thread-safe?
+// - 한 VM이 여러 코어에서 동시에 give_memory 부르면 OWN 이 두개 이상이 될 수 있음. lock 잡아야 함.
+// - revoke 해도 이미 issue 된 메모리 접근은 계속 진행할 수 있음. 
+//   어떤 경우에도 permission table이 corrupt 된게 노출되지는 않음 (zeroing을 이상하게 하면 일어날 수도 있는데, 안함)
+// - share 했을 때 메모리 접근이 check_permission (read_entry!) 통과했으면 write_entry! 에서 적었던 내용이 전부 전달됨.
+//   어떤 경우에도 permission table이 corrupt 된게 노출되지는 않음 (write_entry!가 완전히 적히지 않은 상태)
 ```Coq
 Module HVC {
-  fun share_memory(from: int64, to: int64, vm_id: int8) : int64 {
-    bool current_vm_is_owner = false
+  priv fun current_vm_is_owner(from: int64, to: int64) : bool {
     for(int i=0; i<10; i++) {
-      match read_entry!(100 + 10*i, 100 + 10*i + 10) {
+      match read_entry!(100 + 10*i) with {
         Some(from', to', current_vm, OWN) => {
-          if((from, to) ⊆ (from', to')) {
-            current_vm_is_owner = true
-            break
-          }
+          if((from, to) ⊆ (from', to')) return true;
         }
         _ => _
       }
     }
-    if(!current_vm_is_owner) return -1
+    return false;
+  }
+  
+  fun share_memory(from: int64, to: int64, vm_id: int8) : int64 {
+    if(!current_vm_is_owner(from, to)) return -1
     let new_page = Mpool.alloc_page()
     if(new_page == NULL) return -1
-    if(!write_entry!(new_page, new_page + 10, (from, to, vm_id, ACC))) return -1
+    if(!write_entry!(new_page, (from, to, vm_id, ACC))) return -1
     return 0
+  }
+  
+  fun give_memory(from: int64, to: int64, vm_id: int8) : int64 {
+    if(!current_vm_is_owner(from, to)) return -1
+    // TODO: fill in
   }
 
   fun revoke_memory(from: int64, to: int64, vm_id: int8) : int64 {
-    bool current_vm_is_owner = false
+    if(!current_vm_is_owner(from, to)) return -1
     for(int i=0; i<10; i++) {
-      match read_entry!(100 + 10*i, 100 + 10*i + 10) {
-        Some(from', to', current_vm, OWN) => {
-          if((from, to) ⊆ (from', to')) {
-            current_vm_is_owner = true
-            break
-          }
-        }
-        _ => _
-      }
-    }
-    if(!current_vm_is_owner) return -1
-    for(int i=0; i<10; i++) {
-      match read_entry!(100 + 10*i, 100 + 10*i + 10) {
+      match read_entry!(100 + 10*i) with {
         Some(from, to, vm_id, ACC) => {
+          invalidate_entry!(page)
           Mpool.free_page(100 + 10*i)
           return 0
         }
