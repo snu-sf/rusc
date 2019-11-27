@@ -209,7 +209,8 @@ Module VM1 {
   LS1: Type
   local_state1: LS
   fun run() : (Mem * local_state1) -> (Mem * local_state1) -> Prop := ???
-  //Repetition of (pure_operation|HW.hw_load|HW.hw_store|API.share_memory|API.give_memory) where pure_operation changes only the local_state
+  //Repetition of (pure_operation|HW.hw_load|HW.hw_store|API.share_memory|API.give_memory) 
+  //where pure_operation changes only the local_state
 }
 ```
 
