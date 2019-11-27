@@ -26,7 +26,7 @@ Module API {
       isRunning = false ; [** l.unlock() **]
       return -1 
     }
-    let new_page = Mpool.alloc_page()
+    let new_page = [** Mpool.alloc_page() **]
     if(new_page == NULL) { 
       isRunning = false ; [** l.unlock() **]
       return -1
@@ -68,21 +68,12 @@ Module API {
 
 
 (API_Spec')
-
-//Note: all methods are atomic now (no [** YIELD **]) && local lock is disappeared
-
-//TODO: Mpool.alloc_page(), free_page()도 지워도 됨. 다음 단계(합칠 때)?
-
-//Note: write_entry! UB가 사라졌는데 이게 설명되는 이유: corresponds에서 자기 permission 써놓음
-
-//TODO: latest_seen_memory 저장할 필요 없나?
-
-//NOTE: corresponds가 그냥 막 정한 relation은 아니고, 잘 정한 것. physical view로 보는 다른 모듈들이 (여기선 HW) 존중하는 relation. (p1 ~ l, p2 ~ l 이면 p1이든 p2든 상관 안함)
-
 ```Coq
 Module API {
+//Note: all methods are atomic now (no [** YIELD **]) && local lock is disappeared
+//TODO: consume Mpool.alloc_page()?
+  
   //logical view of permission table
-  //TODO: does it have to me module-local?
   permission_table: int64 -> Set int64
 
   //correspondence between logical view and physical state
@@ -102,7 +93,7 @@ Module API {
   fun share_memory(from: int64, to: int64, vm_id: int8) : int64 {
     assume!(corresponds(Mem, permission_table))
     if(!current_vm_is_owner(from, to)) return -1
-    let new_page = Mpool.alloc_page()
+    let new_page = [** Mpool.alloc_page() **]
     if(new_page == NULL) return -1
     forall i in [from, t), 
       (permission_table i).put(vm_id)

@@ -158,7 +158,7 @@ Module API {
   fun share_memory(from: int64, to: int64, vm_id: int8) : int64 {
     [** l.lock() **]
     if(!current_vm_is_owner(from, to)) { [** l.unlock() **] ; return -1 }
-    let new_page = Mpool.alloc_page()
+    let new_page = [** Mpool.alloc_page() **]
     if(new_page == NULL) { [** l.unlock() **] ; return -1 }
     write_entry!(new_page, (from, to, vm_id))
     [** l.unlock() **]
