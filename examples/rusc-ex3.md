@@ -2,11 +2,13 @@ HW o Lock_Impl <= HW o Lock_Spec //TODO: 여기서도 page table에 대한 assum
 
 HW o Lock_Spec o Mpool_Impl <= HW o Lock_Spec o Mpool_Spec
 
-HW o Mpool_Spec o API_Impl <= HW o Mpool_Spec o API_Spec
+HW o API_Impl <= HW o API_Spec
+
+HW o Lock_Spec o Mpool_Spec o API_Spec <= HW o Lock_Spec o Mpool_Spec o API_Spec'
 
 ...
 
-HW o Mpool_Spec o API_Spec o ... <= HW o HV_Spec
+HW o Mpool_Spec o API_Spec' o ... <= HW o HV_Spec
 
 HW o HV_Spec o VM1_Impl o VM2_Impl <= HW o Top_Spec
 
@@ -94,7 +96,7 @@ Module HW {
         None => _
       }
     }
-    return API.fault_handler(addr)
+    return [** API.fault_handler(addr) **]
   }
 }
 ```
@@ -126,8 +128,6 @@ Module Mpool {
 ```Coq
 //Q: Is API/memory access(HW) thread-safe?
 // [** YIELD **]s are omitted, but it exists in every line.
-// lock()/unlock()s are omitted, but all the methods are fully locked.
-
 Module API {
   l := Lock.new()
 
@@ -157,30 +157,37 @@ Module API {
   }
   
   fun share_memory(from: int64, to: int64, vm_id: int8) : int64 {
-    if(!current_vm_is_owner(from, to)) return -1
+    [** l.lock() **]
+    if(!current_vm_is_owner(from, to)) { [** l.unlock() **] ; return -1 }
     let new_page = Mpool.alloc_page()
-    if(new_page == NULL) return -1
+    if(new_page == NULL) { [** l.unlock() **] ; return -1 }
     write_entry!(new_page, (from, to, vm_id))
+    [** l.unlock() **]
     return 0
   }
   
   fun give_memory(from: int64, to: int64, vm_id: int8) : int64 {
-    if(!current_vm_is_exclusive_owner(from, to)) return -1
+    [** l.lock() **]
+    if(!current_vm_is_exclusive_owner(from, to)) { [** l.unlock() **] ; return -1 }
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
         Some(from, to, current_vm) => {
           invalidate_entry!(100 + 10*i)
           write_entry!(100 + 10*i, (from, to, vm_id))
+          [** l.unlock() **]
           return 0
         }
         _ => _
       }
     }
+    [** l.unlock() **]
     return -1
   }
   
   fun fault_handler(addr) : bool {
+    [** l.lock() **]
     has_permission = /* same logic as HW.check_permission(addr) */
+    [** l.unlock() **]
     if(has_permission) {
       //spurious fault caused by update
       return true
