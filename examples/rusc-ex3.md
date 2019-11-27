@@ -206,7 +206,7 @@ Module API {
 (VM1_Impl)
 ```Coq
 Module VM1 {
-  LS: Type
+  LS1: Type
   local_state1: LS
   fun run() : (Mem * local_state) -> (Mem * local_state) -> Prop := 
     (pure_operation|HW.hw_load|HW.hw_store|API.share_memory|API.give_memory)*
