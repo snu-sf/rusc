@@ -1,6 +1,7 @@
 (API_Spec)
 ```Coq
 Module API {
+  l := Lock.new()
   isRunning = false
   //logical view of permission table
   permission_table: int64 -> Set int64
@@ -70,9 +71,10 @@ Module API {
 (API_Spec')
 ```Coq
 Module API {
-//Note: all methods are atomic now (no [** YIELD **]) && local lock is disappeared
-//TODO: consume Mpool.alloc_page()?
-  
+//Note: l, isRunning, call to [** lock **]/[** unlock **] are all disappeared.
+//All methods are atomic now (no [** YIELD **]).
+//Also, call to Mpool.alloc_page() is disappeared.
+
   //logical view of permission table
   permission_table: int64 -> Set int64
 
@@ -93,12 +95,13 @@ Module API {
   fun share_memory(from: int64, to: int64, vm_id: int8) : int64 {
     assume!(corresponds(Mem, permission_table))
     if(!current_vm_is_owner(from, to)) return -1
-    let new_page = [** Mpool.alloc_page() **]
-    if(new_page == NULL) return -1
-    forall i in [from, t), 
-      (permission_table i).put(vm_id)
+    if(choose { true, false }) {
+      forall i in [from, t), 
+        (permission_table i).put(vm_id)
       Mem[100, 200) <-| new_physical s.t. corresponds(new_physical, permission_table) 
-    return 0
+      return 0
+    }
+    else return -1
   }
   
   fun give_memory(from: int64, to: int64, vm_id: int8) : int64 {
