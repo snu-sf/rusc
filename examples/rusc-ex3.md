@@ -123,28 +123,11 @@ Module Mpool {
 
 
 (API_Impl)
-
-//Q: Is API/memory access(HW) thread-safe?
-
-// - 한 VM이 여러 코어에서 동시에 give_memory 부르면 OWN 이 두개 이상이 될 수 있음. lock 잡아야 함.
-
-// - revoke 해도 이미 issue 된 메모리 접근은 계속 진행할 수 있음. 
-
-//   어떤 경우에도 permission table이 corrupt 된게 노출되지는 않음 (zeroing을 이상하게 하면 일어날 수도 있는데, 안함)
-
-// - share 했을 때 메모리 접근이 check_permission (read_entry!) 통과했으면 write_entry! 에서 적었던 내용이 전부 전달됨.
-
-//   어떤 경우에도 permission table이 corrupt 된게 노출되지는 않음 (write_entry!가 완전히 적히지 않은 상태)
-
-.
-
-.
-
-
-// [** YIELD **]s are omitted, but it exists in every line.
-
-// lock()/unlock()s are omitted, but all the methods are fully locked.
 ```Coq
+//Q: Is API/memory access(HW) thread-safe?
+// [** YIELD **]s are omitted, but it exists in every line.
+// lock()/unlock()s are omitted, but all the methods are fully locked.
+
 Module API {
   l := Lock.new()
 
@@ -186,6 +169,7 @@ Module API {
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
         Some(from, to, current_vm) => {
+          invalidate_entry!(100 + 10*i)
           write_entry!(100 + 10*i, (from, to, vm_id))
           return 0
         }
@@ -196,9 +180,7 @@ Module API {
   }
   
   fun fault_handler(addr) : bool {
-    l.lock()
     has_permission = /* same logic as HW.check_permission(addr) */
-    l.unlock()
     if(has_permission) {
       //spurious fault caused by update
       return true
