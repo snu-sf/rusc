@@ -93,7 +93,7 @@ Module HW {
     }
   }
 
-  priv fun check_permission(addr) {
+  priv fun check_permission(addr) : bool {
     if (is_hv) 
       current_hv_or_vm = 0
     else
@@ -109,7 +109,7 @@ Module HW {
         None => _
       }
     }
-    return false;
+    return API.fault_handler(addr)
   }
 }
 ```
@@ -229,6 +229,21 @@ Module API {
       }
     }
     return -1
+  }
+  
+  fun fault_handler(addr) : bool {
+    l.lock()
+    has_permission = /* same logic as HW.check_permission(addr) */
+    l.unlock()
+    if(has_permission) {
+      //spurious fault caused by update
+      return true
+    }
+    else {
+      //real page fault
+      //TODO: do something
+      return false
+    }
   }
 
   ...
