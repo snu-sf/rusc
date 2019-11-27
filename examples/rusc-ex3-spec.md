@@ -14,20 +14,20 @@
 Module HVC {
   //logical view of permission table
   //TODO: does it have to me module-local?
-  permission_table: int64 -> Set (hv_or_vm_id: int64, acc_lv: AccessLevel)
+  permission_table: int64 -> Set (hv_or_vm_id: int64)
 
   //correspondence between logical view and physical state
   corresponds: Mem[100, 200) -> permission_table -> Prop := ...
 
   priv fun current_vm_is_owner(from: int64, to: int64) : bool {
     forall i in [from, to), 
-      (permission_table i).contains(fun elem => elem.fst == current_vm /\ elem.snd == OWN)
+      (permission_table i).contains(eq current_vm)
   }
   
   priv fun current_vm_is_exclusive_owner(from: int64, to: int64) : bool {
     current_vm_is_owner(from, to) /\
     forall i in [from, to), 
-      (permission_table i).forall(fun elem => elem.fst == current_vm)
+      (permission_table i).forall(eq current_vm)
   }
   
   fun share_memory(from: int64, to: int64, vm_id: int8) : int64 {
@@ -36,7 +36,7 @@ Module HVC {
     let new_page = Mpool.alloc_page()
     if(new_page == NULL) return -1
     forall i in [from, t), 
-      (permission_table i).put(vm_id, ACCESSIBLE)
+      (permission_table i).put(vm_id)
       Mem[100, 200) <-| new_physical s.t. corresponds(new_physical, permission_table) 
     //Note: choosing Mem' is non-deterministic. 
     //logically: [0,100) -> BLAH 
@@ -49,7 +49,7 @@ Module HVC {
     if(!current_vm_is_exclusive_owner(from, to)) return -1
     if(choose { true, false }) {
       forall i in [from, to),
-        (permission_table i).clear().put(vm_id, OWN)
+        (permission_table i).clear().put(vm_id)
       Mem[100, 200) <-| new_physical s.t. corresponds(new_physical, permission_table) 
       return 0
     }
@@ -62,7 +62,7 @@ Module HVC {
     if(choose { true, false }) {
       //TODO: 지금 구현이랑 안맞음. 이게 되려면 구현에서 (from, to) 한개 뿐임을 확인해야 함
       forall i in [from, to),
-        (permission_table i).filter(|elem| elem.fst <> vm_id)
+        (permission_table i).filter(neq vm_id)
       Mem[100, 200) <-| new_physical s.t. corresponds(new_physical, permission_table) 
       return 0
     }

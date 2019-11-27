@@ -38,13 +38,12 @@ is_hv is either true or false. It is changed directly in interaction semantics (
 
 ```
 After initialization
-Accesslevel = OWN | ACCESSIBLE
 [000, 100) -> HV stack, mailbox, etc...
 [100, 200) -> permission table (page table in Hafnium). mpool manages it
-  [   ,    ) -> (is_valid, from,   to, hv_or_vm_id, AccessLevel)
-  [100, 110) -> (    true,    0,  200,           0,         OWN)
-  [110, 120) -> (    true,  200,  300,           1,         OWN)
-  [120, 130) -> (    true,  300,  400,           2,         OWN)
+  [   ,    ) -> (is_valid, from,   to, hv_or_vm_id)
+  [100, 110) -> (    true,    0,  200,           0)
+  [110, 120) -> (    true,  200,  300,           1)
+  [120, 130) -> (    true,  300,  400,           2)
 [200, 300) -> VM1
 [300, 400) -> VM2
 ```
@@ -56,9 +55,9 @@ guarantee!(cond) := if(!cond) NoBehavior
 /* below operations use HW.hw_load, HW.hw_store so that permissions are checked */
 /* if HW.hw_load or HW.hw_store fails, it gives UB */
 /* NOTE: its implementation is not locked at all -- [** YIELD **] is everywhere */
-read_entry!(page: i64): Option (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel) :=  ...
+read_entry!(page: i64): Option (from: i64, to: i64, hv_or_vm_id: i8) :=  ...
   /* NOTE: first checks validity bit */
-write_entry!(page: i64, (from: i64, to: i64, hv_or_vm_id: i8, acc_lv: AccesLevel)) := ...
+write_entry!(page: i64, (from: i64, to: i64, hv_or_vm_id: i8)) := ...
   /* NOTE: it writes is_valid bit at last */
 invalidate_entry!(page: i64) := ...
 read_entry_hardware!(page: i64) := same as read_entry!, but access Mem directly instead of using HW.hw_load.
@@ -188,7 +187,7 @@ Module HVC {
   priv fun current_vm_is_owner(from: int64, to: int64) : bool {
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
-        Some(from', to', current_vm, OWN) => {
+        Some(from', to', current_vm) => {
           if([from, to) ⊆ [from', to')) return true
         }
         _ => _
@@ -201,7 +200,7 @@ Module HVC {
     if(!current_vm_is_owner(from, to)) return false;
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
-        Some(from', to', vm_id, _) => {
+        Some(from', to', vm_id) => {
           if([from, to) ∩ [from', to') /\ vm_id != current_vm) return false
         }
         _ => _
@@ -214,7 +213,7 @@ Module HVC {
     if(!current_vm_is_owner(from, to)) return -1
     let new_page = Mpool.alloc_page()
     if(new_page == NULL) return -1
-    write_entry!(new_page, (from, to, vm_id, ACCESSIBLE))
+    write_entry!(new_page, (from, to, vm_id))
     return 0
   }
   
@@ -222,8 +221,8 @@ Module HVC {
     if(!current_vm_is_exclusive_owner(from, to)) return -1
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
-        Some(from, to, current_vm, OWN) => {
-          write_entry!(100 + 10*i, (from, to, vm_id, OWN))
+        Some(from, to, current_vm) => {
+          write_entry!(100 + 10*i, (from, to, vm_id))
           return 0
         }
         _ => _
@@ -236,7 +235,7 @@ Module HVC {
     if(!current_vm_is_owner(from, to)) return -1
     for(int i=0; i<10; i++) {
       match read_entry!(100 + 10*i) with {
-        Some(from, to, vm_id, ACC) => {
+        Some(from, to, vm_id) => {
           invalidate_entry!(page)
           Mpool.free_page(100 + 10*i)
           return 0
