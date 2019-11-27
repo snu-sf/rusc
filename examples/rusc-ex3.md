@@ -42,7 +42,7 @@ After initialization
 [300, 400) -> VM2
 ```
 
-Macroes
+Macros
 ```
 assume!(cond)    := if(!cond) UndefinedBehavior
 guarantee!(cond) := if(!cond) NoBehavior
@@ -59,8 +59,8 @@ read_entry_hardware!(page: i64) := same as read_entry!, but access Mem directly 
 ```
 
 (HW)
-//These operations are atomic. (i.e. no [** YIELD **])
 ```Coq
+//These operations are atomic. (i.e. no [** YIELD **])
 Module HW {
   fun hw_load(addr) : option memval {
     if(check_permission(addr)) {
@@ -101,9 +101,9 @@ Module HW {
 
 
 (Mpool_Spec)
+```Coq
 //Singleton object
 //Its implementation uses lock, so it has no [** YIELD **]
-```Coq
 Module Mpool {
   pages: { set: Set int64 | range: forall elem in set, 100 <= elem < 200 && elem % 10 == 0 }
 
