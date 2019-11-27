@@ -2,11 +2,11 @@ HW o Lock_Impl <= HW o Lock_Spec
 
 HW o Lock_Spec o Mpool_Impl <= HW o Lock_Spec o Mpool_Spec
 
-HW o Mpool_Spec o HVC_Impl <= HW o Mpool_Spec o HVC_Spec
+HW o Mpool_Spec o API_Impl <= HW o Mpool_Spec o API_Spec
 
 ...
 
-HW o Mpool_Spec o HVC_Spec o ... <= HW o HV_Spec
+HW o Mpool_Spec o API_Spec o ... <= HW o HV_Spec
 
 HW o HV_Spec o VM1_Impl o VM2_Impl <= HW o Top_Spec
 
@@ -158,9 +158,9 @@ Module Mpool {
 ```
 
 
-(HVC_Impl)
+(API_Impl)
 
-//Q: Is HVC/memory access(HW) thread-safe?
+//Q: Is API/memory access(HW) thread-safe?
 
 // - 한 VM이 여러 코어에서 동시에 give_memory 부르면 OWN 이 두개 이상이 될 수 있음. lock 잡아야 함.
 
@@ -181,7 +181,7 @@ Module Mpool {
 
 // lock()/unlock()s are omitted, but all the methods are fully locked.
 ```Coq
-Module HVC {
+Module API {
   l := Lock.new()
 
   priv fun current_vm_is_owner(from: int64, to: int64) : bool {
@@ -242,7 +242,7 @@ Module VM1 {
   LS: Type
   local_state1: LS
   fun run() : (Mem * local_state) -> (Mem * local_state) -> Prop := 
-    (pure_operation|HW.hw_load|HW.hw_store|HVC.share_memory|HVC.revoke_memory)*
+    (pure_operation|HW.hw_load|HW.hw_store|API.share_memory|API.give_memory)*
   //pure_operation changes local_state (which is register value physically)
 }
 ```

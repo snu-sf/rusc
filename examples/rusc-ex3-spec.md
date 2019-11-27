@@ -1,4 +1,4 @@
-(HVC_Spec)
+(API_Spec)
 
 //Note: all methods are atomic now (no [** YIELD **]) && local lock is disappeared
 
@@ -11,7 +11,7 @@
 //NOTE: corresponds가 그냥 막 정한 relation은 아니고, 잘 정한 것. physical view로 보는 다른 모듈들이 (여기선 HW) 존중하는 relation. (p1 ~ l, p2 ~ l 이면 p1이든 p2든 상관 안함)
 
 ```Coq
-Module HVC {
+Module API {
   //logical view of permission table
   //TODO: does it have to me module-local?
   permission_table: int64 -> Set (hv_or_vm_id: int64)
@@ -66,8 +66,12 @@ Module HVC {
 (Top_Spec)
 ```Coq
 Module Top {
-  local_state1, local_state2
+  local_state
 
+  fun share_memory := ...
+
+  fun give_memory := ...
+ 
   ...
 
   fun run1() : (ml: Mem * local_state) -> (ml': Mem * local_state) -> Prop :=
@@ -82,11 +86,11 @@ Module Top {
 (Top_Spec')
 ```Coq
 Module Top {
-  local_state1, local_state2
-  
-  fun share_memory(owners) {
-    Mem[current_vm] = owners;
-  }
+  local_state
+
+  fun share_memory := ...
+
+  fun give_memory := ...
  
   ...
 
