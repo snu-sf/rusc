@@ -59,30 +59,24 @@ read_entry_hardware!(page: i64) := same as read_entry!, but access Mem directly 
 ```
 
 (HW)
-//Basically, [** YIELD **]s are everywhere
-
+//These operations are atomic. (i.e. no [** YIELD **])
 ```Coq
 Module HW {
   fun hw_load(addr) : option memval {
     if(check_permission(addr)) {
-      [** YIELD **]
       return Some(Mem[addr])
     }
     else {
-      [** YIELD **]
       return None
     }
   }
 
   fun hw_store(addr, memval) : bool {
     if(check_permission(addr)) {
-      [** YIELD **]
       Mem[addr] = val;
-      [** YIELD **]
       return true
     }
     else {
-      [** YIELD **]
       return false
     }
   }
@@ -92,11 +86,8 @@ Module HW {
       current_hv_or_vm = 0
     else
       current_hv_or_vm = current_vm
-    [** YIELD **]
     for(int i=0; i<10; i++) {
-      [** YIELD **]
       match read_entry_hardware!(100 + 10*i) {
-        [** YIELD **]
         Some(from, to, current_hv_or_vm, _) => {
           if(addr ∈ [from, to)) return true;
         }
