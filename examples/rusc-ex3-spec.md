@@ -98,9 +98,6 @@ Module API {
     forall i in [from, t), 
       (permission_table i).put(vm_id)
       Mem[100, 200) <-| new_physical s.t. corresponds(new_physical, permission_table) 
-    //Note: choosing Mem' is non-deterministic. 
-    //logically: [0,100) -> BLAH 
-    //physically: [0,100) -> BLAH || ([0, 40) -> BLAH, [40, 100) -> BLAH) || ... || ...
     return 0
   }
   
