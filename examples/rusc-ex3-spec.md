@@ -56,19 +56,6 @@ Module HVC {
     else return -1
   }
 
-  fun revoke_memory(from: int64, to: int64, vm_id: int8) : int64 {
-    assume!(corresponds(Mem, permission_table))
-    if(!current_vm_is_owner(from, to)) return -1
-    if(choose { true, false }) {
-      //TODO: 지금 구현이랑 안맞음. 이게 되려면 구현에서 (from, to) 한개 뿐임을 확인해야 함
-      forall i in [from, to),
-        (permission_table i).filter(neq vm_id)
-      Mem[100, 200) <-| new_physical s.t. corresponds(new_physical, permission_table) 
-      return 0
-    }
-    else return -1
-  }
-
   ...
 }
 ```

@@ -231,21 +231,6 @@ Module HVC {
     return -1
   }
 
-  fun revoke_memory(from: int64, to: int64, vm_id: int8) : int64 {
-    if(!current_vm_is_owner(from, to)) return -1
-    for(int i=0; i<10; i++) {
-      match read_entry!(100 + 10*i) with {
-        Some(from, to, vm_id) => {
-          invalidate_entry!(page)
-          Mpool.free_page(100 + 10*i)
-          return 0
-        }
-        _ => _
-      }
-    }
-    return -1
-  }
-
   ...
 }
 ```
