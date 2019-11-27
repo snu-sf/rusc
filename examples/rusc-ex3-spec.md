@@ -95,7 +95,7 @@ Module API {
   fun share_memory(from: int64, to: int64, vm_id: int8) : int64 {
     assume!(corresponds(Mem, permission_table))
     if(!current_vm_is_owner(from, to)) return -1
-    if(choose { true, false }) {
+    if(choose { true, false }) { //TODO: For better spec, make Mpool.is_empty()?
       forall i in [from, t), 
         (permission_table i).put(vm_id)
       Mem[100, 200) <-| new_physical s.t. corresponds(new_physical, permission_table) 
