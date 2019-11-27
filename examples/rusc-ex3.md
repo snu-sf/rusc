@@ -1,4 +1,4 @@
-HW o Lock_Impl <= HW o Lock_Spec
+HW o Lock_Impl <= HW o Lock_Spec //TODO: 여기서도 page table에 대한 assume! 넣어야 할 듯
 
 HW o Lock_Spec o Mpool_Impl <= HW o Lock_Spec o Mpool_Spec
 
@@ -18,7 +18,7 @@ HW o Top_Spec <= HW o Top_Spec'
 
 Top_Spec: erase UB
 
-Top_Spec': introduce NOB
+Top_Spec': introduce NB
 
 .
 
@@ -29,12 +29,6 @@ Global Data: Mem, current_vm, is_hv
 current_vm is either 1 or 2. It is changed directly in interaction semantics (interleaving run1, run2)
 
 is_hv is either true or false. It is changed directly in interaction semantics (hvcall, return)
-
-//hypervisor id = 0, hvcall 때 current_vm = 0으로 세팅하면 --> hvcall 한 vm 이 자기 id 도 넘겨야 함.
-
-//그러면 그 데이터를 올바르게 넘겼는지 알 수 없음 (vm1이 vm2인 척 하고 share_memory call)
-
-//정리하면, current_vm (레지스터에 있던 인자로 넘기던) 데이터를 vm이 만질 수 있으면 안됨.
 
 ```
 After initialization
