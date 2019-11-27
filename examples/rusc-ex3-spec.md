@@ -3,7 +3,7 @@
 Module API {
   isRunning = false
   //logical view of permission table
-  permission_table: int64 -> Set (hv_or_vm_id: int64)
+  permission_table: int64 -> Set int64
 
   //correspondence between logical view and physical state
   corresponds: Mem[100, 200) -> permission_table -> Prop := ...
@@ -85,7 +85,7 @@ Module API {
 Module API {
   //logical view of permission table
   //TODO: does it have to me module-local?
-  permission_table: int64 -> Set (hv_or_vm_id: int64)
+  permission_table: int64 -> Set int64
 
   //correspondence between logical view and physical state
   corresponds: Mem[100, 200) -> permission_table -> Prop := ...

@@ -49,8 +49,7 @@ Macros
 assume!(cond)    := if(!cond) UndefinedBehavior
 guarantee!(cond) := if(!cond) NoBehavior
 /* below operations use HW.hw_load, HW.hw_store so that permissions are checked */
-/* if HW.hw_load or HW.hw_store fails, it gives UB */
-/* NOTE: its implementation is not locked at all -- [** YIELD **] is everywhere */
+/* NOTE: its implementation is not locked at all -- [** YIELD **]s are everywhere */
 read_entry!(page: i64): Option (from: i64, to: i64, hv_or_vm_id: i8) :=  ...
   /* NOTE: first checks validity bit */
 write_entry!(page: i64, (from: i64, to: i64, hv_or_vm_id: i8)) := ...
