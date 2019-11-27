@@ -89,7 +89,7 @@ Module HW {
       current_hv_or_vm = current_vm
     for(int i=0; i<10; i++) {
       match read_entry_hardware!(100 + 10*i) {
-        Some(from, to, current_hv_or_vm, _) => {
+        Some(from, to, current_hv_or_vm) => {
           if(addr ∈ [from, to)) return true;
         }
         None => _
