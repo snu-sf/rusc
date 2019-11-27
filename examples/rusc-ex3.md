@@ -109,7 +109,7 @@ Module Mpool {
   pages: { set: Set int64 | range: forall elem in set, 100 <= elem < 200 && elem % 10 == 0 }
 
   fun alloc_page() : int64 {
-    match pages.get() with 
+    match pages.pop() with 
     | Some(page) => return page
     | None => return NULL
     end
