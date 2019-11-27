@@ -112,10 +112,9 @@ Module HW {
 (Mpool_Spec)
 //Singleton object
 //Its implementation uses lock, so it has no [** YIELD **]
-//Note: in Hafnium, it is not fully locked. It does not lock when there is only one core: e.g., initialization
 ```Coq
 Module Mpool {
-  pages: Set int64
+  pages: { set: Set int64 | range: forall elem in set, 100 <= elem < 200 && elem % 10 == 0 }
 
   fun alloc_page() : int64 {
     match pages.get() with 
@@ -125,28 +124,8 @@ Module Mpool {
   }
 
   fun free_page(page: int64) {
-    pages.put(page)
-  }
-}
-```
-
-
-(Mpool_Spec_rust)
-//Diff: It maintains invariant
-```Coq
-Module Mpool {
-  pages: { set: Set int64 | range: forall elem in set, 100 <= elem < 200 && elem % 10 == 0 }
-
-  fun alloc_page() : int64 {
-    match pages.get() with 
-    | Some(i64) => return i64
-    | None => return NULL
-    end
-  }
-  
-  fun free_page(page: int64) : bool {
     assume!(100 <= page < 200 && page % 10 == 0);
-    pages.put(page);
+    pages.put(page)
   }
 }
 ```
