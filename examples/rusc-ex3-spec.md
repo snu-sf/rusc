@@ -123,7 +123,7 @@ Module API {
 (Top_Spec)
 ```Coq
 Module Top {
-  local_state
+  local_state1, local_state2
 
   fun share_memory := ...
 
@@ -131,10 +131,10 @@ Module Top {
  
   ...
 
-  fun run1() : (ml: Mem * local_state) -> (ml': Mem * local_state) -> Prop :=
+  fun run1() : (ml: Mem * local_state1) -> (ml': Mem * local_state1) -> Prop :=
     VM1_Impl.run ml ml'
   
-  fun run2() : (ml: Mem * local_state) -> (ml': Mem * local_state) -> Prop :=
+  fun run2() : (ml: Mem * local_state2) -> (ml': Mem * local_state2) -> Prop :=
     ... ditto ...
 }
 ```
@@ -151,11 +151,11 @@ Module Top {
  
   ...
 
-  fun run1() : (ml: Mem * local_state) -> (ml': Mem * local_state) -> Prop :=
+  fun run1() : (ml: Mem * local_state1) -> (ml': Mem * local_state1) -> Prop :=
     VM1_Impl.run ml ml' /\ (NOSTORE: guarantee!(for i in [0,200), ml.fst[i] == ml'.fst[i]))
   (* TODO: NOREAD? -> prove non-interference lemma? make memory model's permission that induces NB? *)
 
-  fun run2() : (ml: Mem * local_state) -> (ml': Mem * local_state) -> Prop :=
+  fun run2() : (ml: Mem * local_state2) -> (ml': Mem * local_state2) -> Prop :=
     ... ditto ...
 }
 ```
